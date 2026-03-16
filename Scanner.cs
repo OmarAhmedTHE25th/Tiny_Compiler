@@ -1,5 +1,7 @@
 namespace Tiny_Compiler;
 
+// ─── Token Classification Enum ───────────────────────────────────────────────
+// Defines all valid token categories that the scanner can produce.
 public enum TokenClass
 {
     // Literals
@@ -49,19 +51,34 @@ public enum TokenClass
     T_Assign,
    
 }
+
+// ─── Token Data Structure ─────────────────────────────────────────────────────
+// Represents a single token produced by the scanner,
+// holding the lexeme (raw text) and its classified type.
 public class Token
 {
     public string Lex;
     public TokenClass TokenType;
 }
+
+// ─── Scanner ──────────────────────────────────────────────────────────────────
+// Reads source code character-by-character, groups characters into lexemes,
+// classifies each lexeme as a token, and builds the token stream.
 public class Scanner
 {
+    // ── Scanner State ─────────────────────────────────────────────────────────
+    // Accumulated list of tokens produced from the source code.
     List<Token> Tokens = [];
+    // Lookup table mapping keyword strings to their token classes.
     Dictionary<string, TokenClass> ReservedWords = [];
+    // Lookup table mapping operator/symbol strings to their token classes.
     Dictionary<string, TokenClass> Operators = [];
 
     public Scanner()
     {
+        // ── Reserved Words Initialization ─────────────────────────────────────
+        // Register all language keywords so they are recognized before
+        // falling through to the identifier check.
         ReservedWords.Add("int", TokenClass.T_Int);
         ReservedWords.Add("float", TokenClass.T_FloatType);
         ReservedWords.Add("string", TokenClass.T_StringType);
@@ -75,6 +92,9 @@ public class Scanner
         ReservedWords.Add("until", TokenClass.T_Until);
         ReservedWords.Add("endl", TokenClass.T_Endl);
         ReservedWords.Add("return", TokenClass.T_Return);
+
+        // ── Operators & Symbols Initialization ────────────────────────────────
+        // Register arithmetic, relational, logical, and punctuation symbols.
         Operators.Add("+", TokenClass.T_Plus);
         Operators.Add("-",TokenClass.T_Minus);
         Operators.Add("*",TokenClass.T_Multiply);
@@ -101,8 +121,14 @@ public class Scanner
         {
             Char currentChar = sourceCode[i];
             int j = i;
+
+            // ── Skip Whitespace ───────────────────────────────────────────────
             if (Char.IsWhiteSpace(currentChar))continue;
             string currentLexeme = currentChar.ToString();
+
+            // ── Identifiers and Keywords ──────────────────────────────────────
+            // Consume a run of letters and digits, then classify the lexeme
+            // as either a reserved keyword or a user-defined identifier.
             if (Char.IsLetter(currentChar))
             {
                 j = i + 1;
@@ -115,6 +141,10 @@ public class Scanner
                 FindTokenClass(currentLexeme); 
                 i = j - 1;
             }
+
+            // ── Numeric Literals ──────────────────────────────────────────────
+            // Consume a run of digits (and at most one '.') to form an integer
+            // or floating-point constant.
             else if (Char.IsDigit(currentChar))
             {
                 j = i + 1;
@@ -126,6 +156,10 @@ public class Scanner
                 FindTokenClass(currentLexeme);
                 i = j - 1;
             }
+
+            // ── Block Comments /* … */ ────────────────────────────────────────
+            // Skip every character between the opening '/*' and closing '*/'
+            // without producing any token.
             else if (currentChar == '/' && sourceCode[j + 1] == '*' )
             {
                 while (!(sourceCode[j] == '*' && sourceCode[j+1] == '/'))
@@ -134,6 +168,10 @@ public class Scanner
                 }
                 i = j+1;
             }
+
+            // ── String Literals ───────────────────────────────────────────────
+            // Consume all characters between opening and closing double-quotes
+            // and emit the entire quoted text as a string token.
             else if (currentChar == '"')
             {
                 j = i + 1;
@@ -143,30 +181,42 @@ public class Scanner
                 FindTokenClass(currentLexeme);
                 i = j;
             }
+
+            // ── Assignment Operator ':=' ──────────────────────────────────────
             else if (currentChar == ':' && sourceCode[i + 1] == '=')
             {
                 currentLexeme = ":=";
                 FindTokenClass(currentLexeme);
                 i++;
             }
+
+            // ── Logical OR Operator '||' ──────────────────────────────────────
             else if (currentChar == '|' && sourceCode[i + 1] == '|')
             {
                 currentLexeme = "||";
                 FindTokenClass(currentLexeme);
                 i++;
             }
+
+            // ── Logical AND Operator '&&' ─────────────────────────────────────
             else if (currentChar == '&' && sourceCode[i + 1] == '&')
             {
                 currentLexeme = "&&";
                 FindTokenClass(currentLexeme);
                 i++;
             }
+
+            // ── Not-Equal Operator '<>' ───────────────────────────────────────
             else if (currentChar == '<' && sourceCode[i + 1] == '>')
             {
                 currentLexeme = "<>";
                 FindTokenClass(currentLexeme);
                 i++;
             }
+
+            // ── Single-Character Operators / Symbols ──────────────────────────
+            // Anything that didn't match the cases above is treated as a
+            // single-character operator or symbol (e.g. '+', '-', ';', etc.).
             else
             {
                 FindTokenClass(currentLexeme);
@@ -176,6 +226,9 @@ public class Scanner
         Tiny_Compiler.TokenStream = Tokens;
     }
 
+    // ── Token Classification ──────────────────────────────────────────────────
+    // Given a lexeme string, determines its token class and appends the
+    // resulting token to the token list, or records an error if unrecognised.
     private void FindTokenClass(string currentLexeme)
     {
         TokenClass tokenClass;
@@ -230,6 +283,9 @@ public class Scanner
         
     }
 
+    // ── Constant Detection ────────────────────────────────────────────────────
+    // Returns true if the lexeme is a numeric literal (integer or float)
+    // or a string literal enclosed in double quotes.
     private static bool IsConstant(string currentLexeme)
     {
       bool isConstant = false;
@@ -241,11 +297,17 @@ public class Scanner
       return isConstant;
     }
 
+    // ── String Constant Detection ─────────────────────────────────────────────
+    // Returns true when the lexeme starts and ends with a double-quote,
+    // indicating it is a string literal.
     private static bool IsConstantString(string currentLexeme)
     {
         return (currentLexeme[0] == '"' && currentLexeme[^1] == '"');
     }
 
+    // ── Identifier Detection ──────────────────────────────────────────────────
+    // Returns true when the lexeme starts with a letter and is not a
+    // reserved keyword, making it a valid user-defined identifier.
     private bool IsIdentifier(string currentLexeme)
     {
         var isIdentifier = false;
@@ -257,6 +319,9 @@ public class Scanner
     }
 }
 
+// ─── Error Collection ─────────────────────────────────────────────────────────
+// Accumulates error messages encountered during scanning and subsequent
+// compiler phases so they can be reported to the user.
 public static class Errors
 {
     public static List<string> ErrorList = new();
