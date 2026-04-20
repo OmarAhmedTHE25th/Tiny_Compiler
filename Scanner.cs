@@ -179,7 +179,11 @@ public class Scanner
                 j = i + 1;
                 while (j < sourceCode.Length && sourceCode[j] != '"')
                     j++;
-                if (j >= sourceCode.Length)Errors.ErrorList.Add("Unterminated String literal");
+                if (j >= sourceCode.Length)
+                {
+                    Errors.ErrorList.Add("Unterminated String literal");
+                    i = sourceCode.Length - 1;
+                }
                 else
                 {
                     currentLexeme = sourceCode.Substring(i, j - i + 1);
