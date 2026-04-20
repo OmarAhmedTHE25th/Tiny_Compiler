@@ -118,7 +118,7 @@ partial class Form1
         Controls.Add(errorTextBox);
         Controls.Add(textBox1);
         Name = "Form1";
-        Text = "Tiny Compiler Scanner";
+        Text = "Tiny Compiler";
         ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
         ResumeLayout(false);
         PerformLayout();
