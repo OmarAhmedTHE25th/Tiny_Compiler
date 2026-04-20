@@ -24,6 +24,7 @@ public enum TokenClass
     T_Then,
     T_Return,
     T_Endl,
+    T_Main,
 
     // Arithmetic
     T_Plus,
@@ -43,7 +44,6 @@ public enum TokenClass
     //Symbols
     T_LParanthesis,
     T_RParanthesis,
-    T_Dot,
     T_LCurlyBracket,
     T_RCurlyBracket,
     T_Semicolon,
@@ -92,6 +92,7 @@ public class Scanner
         ReservedWords.Add("until", TokenClass.T_Until);
         ReservedWords.Add("endl", TokenClass.T_Endl);
         ReservedWords.Add("return", TokenClass.T_Return);
+        ReservedWords.Add("main", TokenClass.T_Main);
 
         // ── Operators & Symbols Initialization ────────────────────────────────
         // Register arithmetic, relational, logical, and punctuation symbols.
@@ -107,7 +108,6 @@ public class Scanner
         Operators.Add("||",TokenClass.T_Or);
         Operators.Add("(", TokenClass.T_LParanthesis);
         Operators.Add(")", TokenClass.T_RParanthesis);
-        Operators.Add(".", TokenClass.T_Dot);
         Operators.Add("{", TokenClass.T_LCurlyBracket);
         Operators.Add("}", TokenClass.T_RCurlyBracket);
         Operators.Add(";", TokenClass.T_Semicolon);
@@ -115,7 +115,7 @@ public class Scanner
         Operators.Add(":=", TokenClass.T_Assign);
     }
 
-    public void StartScanning(string sourceCode)
+    public void StartScanning(string sourceCode) //int x 
     {
         for (int i = 0; i < sourceCode.Length; i++)
         {
@@ -160,12 +160,14 @@ public class Scanner
             // ── Block Comments /* … */ ────────────────────────────────────────
             // Skip every character between the opening '/*' and closing '*/'
             // without producing any token.
-            else if (currentChar == '/' && sourceCode[j + 1] == '*' )
+            else if (currentChar == '/' &&  j + 1 < sourceCode.Length && sourceCode[j + 1] == '*' )
             {
-                while (!(sourceCode[j] == '*' && sourceCode[j+1] == '/'))
+                while (j + 1 < sourceCode.Length - 1 && !(sourceCode[j] == '*' && sourceCode[j + 1] == '/'))
                 {
                     j++;
                 }
+                if (j + 1 >= sourceCode.Length - 1)
+                    Errors.ErrorList.Add("Unterminated block comment");
                 i = j+1;
             }
 
@@ -177,13 +179,17 @@ public class Scanner
                 j = i + 1;
                 while (j < sourceCode.Length && sourceCode[j] != '"')
                     j++;
-                currentLexeme = sourceCode.Substring(i, j - i + 1);
-                FindTokenClass(currentLexeme);
-                i = j;
+                if (j >= sourceCode.Length)Errors.ErrorList.Add("Unterminated String literal");
+                else
+                {
+                    currentLexeme = sourceCode.Substring(i, j - i + 1);
+                    FindTokenClass(currentLexeme);
+                    i = j;
+                }
             }
 
             // ── Assignment Operator ':=' ──────────────────────────────────────
-            else if (currentChar == ':' && sourceCode[i + 1] == '=')
+            else if (currentChar == ':' && i+1 < sourceCode.Length && sourceCode[i + 1] == '=')
             {
                 currentLexeme = ":=";
                 FindTokenClass(currentLexeme);
@@ -191,7 +197,7 @@ public class Scanner
             }
 
             // ── Logical OR Operator '||' ──────────────────────────────────────
-            else if (currentChar == '|' && sourceCode[i + 1] == '|')
+            else if (currentChar == '|' && i+1 < sourceCode.Length &&sourceCode[i + 1] == '|')
             {
                 currentLexeme = "||";
                 FindTokenClass(currentLexeme);
@@ -199,7 +205,7 @@ public class Scanner
             }
 
             // ── Logical AND Operator '&&' ─────────────────────────────────────
-            else if (currentChar == '&' && sourceCode[i + 1] == '&')
+            else if (currentChar == '&'  && i+1 < sourceCode.Length&& sourceCode[i + 1] == '&')
             {
                 currentLexeme = "&&";
                 FindTokenClass(currentLexeme);
@@ -223,12 +229,12 @@ public class Scanner
             }
             
         }
-        Tiny_Compiler.TokenStream = Tokens;
+        TinyCompiler.TokenStream = Tokens;
     }
 
     // ── Token Classification ──────────────────────────────────────────────────
     // Given a lexeme string, determines its token class and appends the
-    // resulting token to the token list, or records an error if unrecognised.
+    // resulting token to the token list, or records an error if unrecognized.
     private void FindTokenClass(string currentLexeme)
     {
         TokenClass tokenClass;
@@ -320,7 +326,7 @@ public class Scanner
 }
 
 // ─── Error Collection ─────────────────────────────────────────────────────────
-// Accumulates error messages encountered during scanning and subsequent
+// Accumulates error messages encountered during scanning and later
 // compiler phases so they can be reported to the user.
 public static class Errors
 {

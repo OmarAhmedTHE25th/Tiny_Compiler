@@ -1,13 +1,14 @@
 namespace Tiny_Compiler;
 
-public class Tiny_Compiler
+public class TinyCompiler
 {
-    static Scanner JasonScanner = new ();
+    static Scanner TinyScanner = new ();
     public static List<Token> TokenStream = [];
 
     public static void StartCompiler(string sourceCode)
     {
-        JasonScanner.StartScanning(sourceCode);
+        TinyScanner.StartScanning(sourceCode);
     }
+    
 
 }
