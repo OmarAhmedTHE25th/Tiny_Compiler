@@ -12,6 +12,7 @@
         {
             dataGridView1.Rows.Clear();
             errorTextBox.Clear();
+            treeView1.Nodes.Clear();
 
             // Reset shared state before each scan so output does not accumulate.
             TinyCompiler.TokenStream.Clear();
@@ -21,7 +22,33 @@
             TinyCompiler.StartCompiler(code);
 
             PrintTokens();
+
+            if (Errors.ErrorList.Count == 0)
+            {
+                Parser parser = new Parser();
+                parser.Parse(TinyCompiler.TokenStream);
+                if (parser.Root != null)
+                {
+                    TreeNode rootNode = ParseToTreeNode(parser.Root);
+                    treeView1.Nodes.Add(rootNode);
+                    treeView1.CollapseAll();
+                }
+            }
+
             PrintErrors();
+        }
+
+        private TreeNode ParseToTreeNode(Node node)
+        {
+            TreeNode treeNode = new TreeNode(node.Name);
+            foreach (var child in node.Children)
+            {
+                if (child != null && !string.IsNullOrEmpty(child.Name))
+                {
+                    treeNode.Nodes.Add(ParseToTreeNode(child));
+                }
+            }
+            return treeNode;
         }
 
         private void ConfigureTokenGrid()
@@ -50,7 +77,6 @@
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -59,6 +85,7 @@
             errorTextBox.Clear();
             TinyCompiler.TokenStream.Clear();
             dataGridView1.Rows.Clear();
+            treeView1.Nodes.Clear();
             Errors.ErrorList.Clear();
         }
     }
