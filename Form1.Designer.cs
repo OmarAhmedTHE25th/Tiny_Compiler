@@ -10,7 +10,11 @@ partial class Form1
     private TextBox textBox1;
     private TextBox errorTextBox;
     private Label errorsLabel;
+    private TabControl outputTabControl;
+    private TabPage tokensTabPage;
+    private TabPage treeTabPage;
     private DataGridView dataGridView1;
+    private TreeView treeView1;
     private Button button1;
     private Button button2;
 
@@ -39,10 +43,17 @@ partial class Form1
         textBox1 = new TextBox();
         errorTextBox = new TextBox();
         errorsLabel = new Label();
+        outputTabControl = new TabControl();
+        tokensTabPage = new TabPage();
         dataGridView1 = new DataGridView();
+        treeTabPage = new TabPage();
+        treeView1 = new TreeView();
         button1 = new Button();
         button2 = new Button();
+        outputTabControl.SuspendLayout();
+        tokensTabPage.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+        treeTabPage.SuspendLayout();
         SuspendLayout();
         // 
         // textBox1
@@ -73,18 +84,59 @@ partial class Form1
         errorsLabel.TabIndex = 1;
         errorsLabel.Text = "Errors";
         // 
+        // outputTabControl
+        // 
+        outputTabControl.Controls.Add(tokensTabPage);
+        outputTabControl.Controls.Add(treeTabPage);
+        outputTabControl.Location = new Point(448, 12);
+        outputTabControl.Name = "outputTabControl";
+        outputTabControl.SelectedIndex = 0;
+        outputTabControl.Size = new Size(340, 426);
+        outputTabControl.TabIndex = 2;
+        // 
+        // tokensTabPage
+        // 
+        tokensTabPage.Controls.Add(dataGridView1);
+        tokensTabPage.Location = new Point(4, 24);
+        tokensTabPage.Name = "tokensTabPage";
+        tokensTabPage.Padding = new Padding(3);
+        tokensTabPage.Size = new Size(332, 398);
+        tokensTabPage.TabIndex = 0;
+        tokensTabPage.Text = "Tokens";
+        tokensTabPage.UseVisualStyleBackColor = true;
+        // 
         // dataGridView1
         // 
         dataGridView1.AllowUserToAddRows = false;
         dataGridView1.AllowUserToDeleteRows = false;
         dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dataGridView1.Location = new Point(448, 12);
+        dataGridView1.Dock = DockStyle.Fill;
+        dataGridView1.Location = new Point(3, 3);
         dataGridView1.Name = "dataGridView1";
         dataGridView1.ReadOnly = true;
         dataGridView1.RowHeadersVisible = false;
-        dataGridView1.Size = new Size(340, 426);
-        dataGridView1.TabIndex = 2;
+        dataGridView1.Size = new Size(326, 392);
+        dataGridView1.TabIndex = 0;
         dataGridView1.CellContentClick += dataGridView1_CellContentClick;
+        // 
+        // treeTabPage
+        // 
+        treeTabPage.Controls.Add(treeView1);
+        treeTabPage.Location = new Point(4, 24);
+        treeTabPage.Name = "treeTabPage";
+        treeTabPage.Padding = new Padding(3);
+        treeTabPage.Size = new Size(332, 398);
+        treeTabPage.TabIndex = 1;
+        treeTabPage.Text = "Parse Tree";
+        treeTabPage.UseVisualStyleBackColor = true;
+        // 
+        // treeView1
+        // 
+        treeView1.Dock = DockStyle.Fill;
+        treeView1.Location = new Point(3, 3);
+        treeView1.Name = "treeView1";
+        treeView1.Size = new Size(326, 392);
+        treeView1.TabIndex = 0;
         // 
         // button1
         // 
@@ -114,12 +166,15 @@ partial class Form1
         Controls.Add(errorsLabel);
         Controls.Add(button2);
         Controls.Add(button1);
-        Controls.Add(dataGridView1);
+        Controls.Add(outputTabControl);
         Controls.Add(errorTextBox);
         Controls.Add(textBox1);
         Name = "Form1";
         Text = "Tiny Compiler";
+        outputTabControl.ResumeLayout(false);
+        tokensTabPage.ResumeLayout(false);
         ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+        treeTabPage.ResumeLayout(false);
         ResumeLayout(false);
         PerformLayout();
     }
