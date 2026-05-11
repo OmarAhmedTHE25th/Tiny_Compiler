@@ -77,39 +77,39 @@ public class Scanner
     public Scanner()
     {
         // ── Reserved Words Initialization ─────────────────────────────────────
-        ReservedWords.Add("int", TokenClass.T_Int);
-        ReservedWords.Add("float", TokenClass.T_FloatType);
+        ReservedWords.Add("int",    TokenClass.T_Int);
+        ReservedWords.Add("float",  TokenClass.T_FloatType);
         ReservedWords.Add("string", TokenClass.T_StringType);
-        ReservedWords.Add("if", TokenClass.T_If);
+        ReservedWords.Add("if",     TokenClass.T_If);
         ReservedWords.Add("elseif", TokenClass.T_Elseif);
-        ReservedWords.Add("else", TokenClass.T_Else);
-        ReservedWords.Add("then", TokenClass.T_Then);
-        ReservedWords.Add("end", TokenClass.T_End);      // FIX 1: registers "end" as reserved
-        ReservedWords.Add("read", TokenClass.T_Read);
-        ReservedWords.Add("write", TokenClass.T_Write);
+        ReservedWords.Add("else",   TokenClass.T_Else);
+        ReservedWords.Add("then",   TokenClass.T_Then);
+        ReservedWords.Add("end",    TokenClass.T_End);      // FIX 1: registers "end" as reserved
+        ReservedWords.Add("read",   TokenClass.T_Read);
+        ReservedWords.Add("write",  TokenClass.T_Write);
         ReservedWords.Add("repeat", TokenClass.T_Repeat);
-        ReservedWords.Add("until", TokenClass.T_Until);
-        ReservedWords.Add("endl", TokenClass.T_Endl);
+        ReservedWords.Add("until",  TokenClass.T_Until);
+        ReservedWords.Add("endl",   TokenClass.T_Endl);
         ReservedWords.Add("return", TokenClass.T_Return);
-        ReservedWords.Add("main", TokenClass.T_Main);
+        ReservedWords.Add("main",   TokenClass.T_Main);
 
         // ── Operators & Symbols Initialization ────────────────────────────────
-        Operators.Add("+", TokenClass.T_Plus);
-        Operators.Add("-", TokenClass.T_Minus);
-        Operators.Add("*", TokenClass.T_Multiply);
-        Operators.Add("/", TokenClass.T_Divide);
-        Operators.Add("<", TokenClass.T_LessThan);
-        Operators.Add(">", TokenClass.T_GreaterThan);
+        Operators.Add("+",  TokenClass.T_Plus);
+        Operators.Add("-",  TokenClass.T_Minus);
+        Operators.Add("*",  TokenClass.T_Multiply);
+        Operators.Add("/",  TokenClass.T_Divide);
+        Operators.Add("<",  TokenClass.T_LessThan);
+        Operators.Add(">",  TokenClass.T_GreaterThan);
         Operators.Add("<>", TokenClass.T_NotEqual);
-        Operators.Add("=", TokenClass.T_Equal);
+        Operators.Add("=",  TokenClass.T_Equal);
         Operators.Add("&&", TokenClass.T_And);
         Operators.Add("||", TokenClass.T_Or);
-        Operators.Add("(", TokenClass.T_LParanthesis);
-        Operators.Add(")", TokenClass.T_RParanthesis);
-        Operators.Add("{", TokenClass.T_LCurlyBracket);
-        Operators.Add("}", TokenClass.T_RCurlyBracket);
-        Operators.Add(";", TokenClass.T_Semicolon);
-        Operators.Add(",", TokenClass.T_Comma);
+        Operators.Add("(",  TokenClass.T_LParanthesis);
+        Operators.Add(")",  TokenClass.T_RParanthesis);
+        Operators.Add("{",  TokenClass.T_LCurlyBracket);
+        Operators.Add("}",  TokenClass.T_RCurlyBracket);
+        Operators.Add(";",  TokenClass.T_Semicolon);
+        Operators.Add(",",  TokenClass.T_Comma);
         Operators.Add(":=", TokenClass.T_Assign);
     }
 
@@ -142,7 +142,8 @@ public class Scanner
             else if (char.IsDigit(currentChar))
             {
                 j = i + 1;
-                while (j < sourceCode.Length && (char.IsDigit(sourceCode[j]) || sourceCode[j] == '.'))
+                bool hasDot = false;
+                while (j < sourceCode.Length && (char.IsDigit(sourceCode[j]) || (sourceCode[j] == '.' && !hasDot)))
                 {
                     currentLexeme += sourceCode[j];
                     j++;
@@ -154,14 +155,18 @@ public class Scanner
             // ── Block Comments /* … */ ────────────────────────────────────────
             // Skip every character between the opening '/*' and closing '*/'
             // without producing any token.
-            else if (currentChar == '/' &&  j + 1 < sourceCode.Length && sourceCode[j + 1] == '*' )
+            else if (currentChar == '/' && j + 1 < sourceCode.Length && sourceCode[j + 1] == '*')
             {
                 j += 2; // step past the opening /*
                 while (j + 1 < sourceCode.Length && !(sourceCode[j] == '*' && sourceCode[j + 1] == '/'))
                     j++;
 
                 if (j + 1 >= sourceCode.Length)
+                {
                     Errors.ErrorList.Add("Unterminated block comment");
+                    i = sourceCode.Length - 1; // skip to end — prevents the scanner from
+                                               // tokenizing the comment body as code
+                }
                 else
                     i = j + 1; // step past the closing */
             }
@@ -208,7 +213,7 @@ public class Scanner
             }
 
             // ── Not-Equal Operator '<>' ───────────────────────────────────────
-            else if (currentChar == '<' && sourceCode[i + 1] == '>')
+            else if (currentChar == '<' && i + 1 < sourceCode.Length && sourceCode[i + 1] == '>')
             {
                 FindTokenClass("<>");
                 i++;
