@@ -1,4 +1,4 @@
-namespace Tiny_Compiler;
+﻿namespace Tiny_Compiler;
 
 public class Node
 {
@@ -43,9 +43,9 @@ public class Parser
     private Node Program_Function_Statement()
     {
         Node node = new Node("Program_Function_Statement");
-        if (inputPointer < tokenStream.Count && 
-            (tokenStream[inputPointer].TokenType == TokenClass.T_Int || 
-             tokenStream[inputPointer].TokenType == TokenClass.T_FloatType || 
+        if (inputPointer < tokenStream.Count &&
+            (tokenStream[inputPointer].TokenType == TokenClass.T_Int ||
+             tokenStream[inputPointer].TokenType == TokenClass.T_FloatType ||
              tokenStream[inputPointer].TokenType == TokenClass.T_StringType))
         {
             if (inputPointer + 1 < tokenStream.Count && tokenStream[inputPointer + 1].TokenType != TokenClass.T_Main)
@@ -114,9 +114,9 @@ public class Parser
     private Node Function_Parameters()
     {
         Node node = new Node("Function_Parameters");
-        if (inputPointer < tokenStream.Count && 
-            (tokenStream[inputPointer].TokenType == TokenClass.T_Int || 
-             tokenStream[inputPointer].TokenType == TokenClass.T_FloatType || 
+        if (inputPointer < tokenStream.Count &&
+            (tokenStream[inputPointer].TokenType == TokenClass.T_Int ||
+             tokenStream[inputPointer].TokenType == TokenClass.T_FloatType ||
              tokenStream[inputPointer].TokenType == TokenClass.T_StringType))
         {
             node.Children.Add(Data_Type());
@@ -155,7 +155,7 @@ public class Parser
         if (inputPointer < tokenStream.Count)
         {
             var type = tokenStream[inputPointer].TokenType;
-            if (type == TokenClass.T_Identifier || 
+            if (type == TokenClass.T_Identifier ||
                 type == TokenClass.T_Int || type == TokenClass.T_FloatType || type == TokenClass.T_StringType ||
                 type == TokenClass.T_Write || type == TokenClass.T_Read ||
                 type == TokenClass.T_If || type == TokenClass.T_Repeat)
@@ -214,8 +214,8 @@ public class Parser
         Node node = new Node("Declaration_Statement");
         node.Children.Add(Data_Type());
         node.Children.Add(Match(TokenClass.T_Identifier));
-        node.Children.Add(Declare_Rest1());
-        node.Children.Add(Declare_Rest2());
+        node.Children.Add(Declare_Rest2());   // optional := expr for the first identifier
+        node.Children.Add(Declare_Rest1());   // , more identifiers (each with their own optional := expr)
         node.Children.Add(Match(TokenClass.T_Semicolon));
         return node;
     }
@@ -227,7 +227,8 @@ public class Parser
         {
             node.Children.Add(Match(TokenClass.T_Comma));
             node.Children.Add(Match(TokenClass.T_Identifier));
-            node.Children.Add(Declare_Rest1());
+            node.Children.Add(Declare_Rest2());   // optional := expr for this identifier
+            node.Children.Add(Declare_Rest1());   // recurse for further identifiers
         }
         return node;
     }
@@ -268,7 +269,7 @@ public class Parser
     {
         Node node = new Node("If_Statement");
         node.Children.Add(Match(TokenClass.T_If));
-        node.Children.Add(Condition()); // Condition_Statement simplified
+        node.Children.Add(Condition());
         node.Children.Add(Match(TokenClass.T_Then));
         node.Children.Add(Statements());
         node.Children.Add(Other_Conditions());
@@ -292,15 +293,21 @@ public class Parser
             {
                 node.Children.Add(Match(TokenClass.T_Else));
                 node.Children.Add(Statements());
-                node.Children.Add(Match(TokenClass.T_Identifier)); // "end" is missing from tokens, assuming it's identifier or I skip. We should match T_End or identifier if not provided. Wait, Tiny doesn't have T_End? Ah, keywords might parse as T_Identifier for 'end'.
-                // Using T_Identifier for 'end' fallback
+                node.Children.Add(Match(TokenClass.T_End));
             }
-            else // 'end'
+            else if (tokenStream[inputPointer].TokenType == TokenClass.T_End)
             {
-                // Just match 'end' if it's an identifier or so.
-                if (tokenStream[inputPointer].Lex == "end")
-                    node.Children.Add(Match(TokenClass.T_Identifier));
+                // Plain if-then-end
+                node.Children.Add(Match(TokenClass.T_End));
             }
+            else
+            {
+                Errors.ErrorList.Add($"Syntax error at position {inputPointer}: expected 'end', 'else', or 'elseif', found '{tokenStream[inputPointer].Lex}'");
+            }
+        }
+        else
+        {
+            Errors.ErrorList.Add($"Unexpected end of input: missing 'end' to close if-block");
         }
         return node;
     }
@@ -341,7 +348,8 @@ public class Parser
         if (inputPointer < tokenStream.Count)
         {
             var type = tokenStream[inputPointer].TokenType;
-            if (type == TokenClass.T_LessThan || type == TokenClass.T_GreaterThan || type == TokenClass.T_Equal || type == TokenClass.T_NotEqual)
+            if (type == TokenClass.T_LessThan || type == TokenClass.T_GreaterThan ||
+                type == TokenClass.T_Equal || type == TokenClass.T_NotEqual)
                 node.Children.Add(Match(type));
         }
         return node;
@@ -429,7 +437,8 @@ public class Parser
         if (inputPointer < tokenStream.Count)
         {
             var type = tokenStream[inputPointer].TokenType;
-            if (type == TokenClass.T_Plus || type == TokenClass.T_Minus || type == TokenClass.T_Multiply || type == TokenClass.T_Divide)
+            if (type == TokenClass.T_Plus || type == TokenClass.T_Minus ||
+                type == TokenClass.T_Multiply || type == TokenClass.T_Divide)
             {
                 node.Children.Add(Match(type));
                 node.Children.Add(Equation());
@@ -491,7 +500,11 @@ public class Parser
         }
         else
         {
-            return new Node(""); // Error handling could be added here
+            string found = inputPointer < tokenStream.Count
+                ? $"'{tokenStream[inputPointer].Lex}'"
+                : "end of input";
+            Errors.ErrorList.Add($"Syntax error at position {inputPointer}: expected {expectedToken}, found {found}");
+            return new Node($"[ERROR: expected {expectedToken}]");
         }
     }
 }
